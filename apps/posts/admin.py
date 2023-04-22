@@ -15,9 +15,9 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Media)
 class MediaAdmin(admin.ModelAdmin):
-    list_display = ('media_type', 'post')
+    list_display = ('id', 'type', 'post')
     search_fields = ('post__id',)
-    list_filter = ('media_type', 'post')
+    list_filter = ('type', 'post')
     save_on_top = True
     save_as = True
 

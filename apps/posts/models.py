@@ -39,13 +39,13 @@ class Media(models.Model):
     post = models.ForeignKey(
         Post, on_delete=models.CASCADE, related_name='medias'
     )
-    media_file = models.FileField(
+    file = models.FileField(
         upload_to='posts/%Y/%m/%d',
         validators=[FileExtensionValidator(
             allowed_extensions=settings.IMAGE_FORMATS + settings.VIDEO_FORMATS
         )],
     )
-    media_type = models.CharField(
+    type = models.CharField(
         choices=MEDIA_CHOICES, max_length=5, default='image')
 
     class Meta:

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 User = settings.AUTH_USER_MODEL
@@ -18,7 +19,7 @@ class Post(models.Model):
     )
     date_created = models.DateTimeField(
         'Post creation date', auto_now_add=True)
-    text = models.TextField(
+    text = models.CharField(
         'Post text', max_length=9999, blank=True, null=True)
 
     class Meta:
@@ -31,16 +32,21 @@ class Media(models.Model):
     """
 
     MEDIA_CHOICES = (
-        ('photo', 'photo'),
+        ('image', 'image'),
         ('video', 'video'),
     )
 
     post = models.ForeignKey(
         Post, on_delete=models.CASCADE, related_name='medias'
     )
-    media_file = models.FileField(upload_to='posts/%Y/%m/%d')
+    media_file = models.FileField(
+        upload_to='posts/%Y/%m/%d',
+        validators=[FileExtensionValidator(
+            allowed_extensions=settings.IMAGE_FORMATS + settings.VIDEO_FORMATS
+        )],
+    )
     media_type = models.CharField(
-        choices=MEDIA_CHOICES, max_length=5, default='photo')
+        choices=MEDIA_CHOICES, max_length=5, default='image')
 
     class Meta:
         db_table = 'media'

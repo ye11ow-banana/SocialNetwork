@@ -13,6 +13,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -23,6 +27,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'djoser',
+    'debug_toolbar',
 
     'accounts',
     'posts',
@@ -36,6 +41,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     'accounts.middleware.UpdateLastActivityMiddleware',
 ]

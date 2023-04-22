@@ -4,10 +4,8 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('posts/', include('posts.urls')),
-
-    path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.jwt')),
+    path('api/accounts/', include('accounts.urls')),
+    path('api/posts/', include('posts.urls')),
 ]
 
 if settings.DEBUG:

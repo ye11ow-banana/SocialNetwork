@@ -105,3 +105,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+IMAGE_FORMATS = ('jpg', 'pdf', 'png', 'webp', 'jpeg')
+VIDEO_FORMATS = ('mp4',)

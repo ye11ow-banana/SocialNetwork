@@ -10,7 +10,7 @@ class PostCreationView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PostSerializer
 
-    def perform_create(self, serializer: PostSerializer) -> None:
+    def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
 
@@ -19,7 +19,7 @@ class MediaCreationView(generics.CreateAPIView):
     serializer_class = MediaSerializer
     parser_classes = [FileUploadParser]
 
-    def perform_create(self, serializer: MediaSerializer) -> None:
+    def perform_create(self, serializer):
         post_id = self.kwargs['pk']
         serializer.save(post_id=post_id)
 

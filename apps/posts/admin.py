@@ -5,7 +5,7 @@ from .models import Post, Media, PostLike
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('author', 'date_created')
+    list_display = ('id', 'author', 'date_created')
     search_fields = ('author', 'date_created')  # todo: check date search
     list_filter = ('author', 'date_created')
     readonly_fields = ('date_created',)
@@ -15,9 +15,9 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Media)
 class MediaAdmin(admin.ModelAdmin):
-    list_display = ('title', 'media_type', 'post')
-    search_fields = ('title', 'post')
-    list_filter = ('title', 'media_type', 'post')
+    list_display = ('media_type', 'post')
+    search_fields = ('post',)
+    list_filter = ('media_type', 'post')
     save_on_top = True
     save_as = True
 

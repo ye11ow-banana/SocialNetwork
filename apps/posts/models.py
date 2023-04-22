@@ -38,16 +38,12 @@ class Media(models.Model):
     post = models.ForeignKey(
         Post, on_delete=models.CASCADE, related_name='medias'
     )
-    title = models.CharField('File title of the media', max_length=255)
     media_file = models.FileField(upload_to='posts/%Y/%m/%d')
     media_type = models.CharField(
         choices=MEDIA_CHOICES, max_length=5, default='photo')
 
     class Meta:
         db_table = 'media'
-
-    def __str__(self):
-        return self.title
 
 
 class PostLike(models.Model):

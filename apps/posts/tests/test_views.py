@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 
-from posts.models import Post, Media
+from posts.models import Post, Media, PostLike
 
 User = get_user_model()
 TEST_DIR = 'tmp'
@@ -33,8 +33,9 @@ class PostCreationViewTest(APITestCase):
         response = self.client.post(self.url, data={})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Post.objects.count(), 1)
-        self.assertEqual(Post.objects.first().text, None)
-        self.assertEqual(Post.objects.first().author, self.user)
+        post = Post.objects.first()
+        self.assertEqual(post.text, None)
+        self.assertEqual(post.author, self.user)
 
     def test_new_post_created(self) -> None:
         self.user2 = User.objects.create_user(
@@ -44,8 +45,9 @@ class PostCreationViewTest(APITestCase):
             self.url, data=data, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Post.objects.count(), 1)
-        self.assertEqual(Post.objects.first().text, 'Test Text')
-        self.assertEqual(Post.objects.first().author, self.user)
+        post = Post.objects.first()
+        self.assertEqual(post.text, 'Test Text')
+        self.assertEqual(post.author, self.user)
 
 
 class MediaCreationViewTest(APITestCase):
@@ -121,3 +123,45 @@ class MediaCreationViewTest(APITestCase):
             shutil.rmtree(TEST_DIR)
         except OSError:
             pass
+
+
+class PostLikeCreationViewTest(APITestCase):
+
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(
+            username='test_user', password='test_pass')
+        self.token = AccessToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer  {self.token}')
+        self.post = Post.objects.create(author=self.user)
+        self.url = f'http://127.0.0.1:8000/api/posts/{self.post.id}/likes/add/'
+
+    def test_authentication_required(self) -> None:
+        self.client.credentials()
+        response = self.client.post(self.url, data={})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_new_post_like_created(self) -> None:
+        response = self.client.post(self.url, data={})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 1)
+        post_like = PostLike.objects.first()
+        self.assertEqual(post_like.author, self.user)
+        self.assertEqual(post_like.post, self.post)
+
+    def test_non_existent_post(self) -> None:
+        url = f'http://127.0.0.1:8000/api/posts/{self.post.id+1}/likes/add/'
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 0)
+
+    def test_second_like_rejected(self) -> None:
+        PostLike.objects.create(author=self.user, post=self.post)
+        response = self.client.post(self.url, data={})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 1)
+        post_like = PostLike.objects.first()
+        self.assertEqual(post_like.author, self.user)
+        self.assertEqual(post_like.post, self.post)

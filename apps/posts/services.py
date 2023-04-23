@@ -31,5 +31,13 @@ def get_post_with_id_or_404(post_id: int) -> Post:
     return get_object_or_404(posts)
 
 
+def get_post_like_with_id_or_404(**kwargs) -> PostLike:
+    """
+    Return `PostLike` object with loaded `id` field.
+    """
+    post_likes = PostLike.objects.filter(**kwargs)
+    return get_object_or_404(post_likes.only('id'))
+
+
 def get_or_create_post_like(data: dict) -> tuple[PostLike, bool]:
     return PostLike.objects.get_or_create(**data)

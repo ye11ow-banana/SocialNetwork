@@ -42,11 +42,11 @@ class PostLikeCreationView(generics.CreateAPIView):
 class PostLikeDestroyView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def get_object(self):
         post_pk = self.kwargs['pk']
-        return PostLike.objects.filter(
+        return services.get_post_like_with_id_or_404(
             author_id=self.request.user.id, post_id=post_pk
-        ).only('id')
+        )
 
     def destroy(self, request, *args, **kwargs):
         try:

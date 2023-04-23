@@ -165,3 +165,59 @@ class PostLikeCreationViewTest(APITestCase):
         post_like = PostLike.objects.first()
         self.assertEqual(post_like.author, self.user)
         self.assertEqual(post_like.post, self.post)
+
+
+class PostLikeDestroyViewTest(APITestCase):
+
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(
+            username='test_user', password='test_pass')
+        self.token = AccessToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer  {self.token}')
+        self.post = Post.objects.create(author=self.user)
+        self.post_like = PostLike.objects.create(
+            author=self.user, post=self.post
+        )
+        self.url = f'http://127.0.0.1:8000/api/posts/' \
+                   f'{self.post.id}/likes/remove/'
+
+    def test_authentication_required(self) -> None:
+        self.client.credentials()
+        response = self.client.delete(self.url, data={})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_post_like_of_someone_else_post_destroyed(self) -> None:
+        """
+        Checks that `PostLike` object will be destroyed even
+        if the author of `Post` object is someone else.
+        """
+        self.user2 = User.objects.create_user(
+            username='test_user2', password='test_pass2')
+        self.post.author = self.user2
+        self.post.save()
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 0)
+
+    def test_post_like_destroyed(self) -> None:
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 0)
+
+    def test_non_existent_post(self) -> None:
+        url = f'http://127.0.0.1:8000/api/posts/' \
+                f'{self.post.id+1}/likes/remove/'
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 1)
+
+    def test_non_existent_post_like(self) -> None:
+        self.post_like.delete()
+        url = f'http://127.0.0.1:8000/api/posts/{self.post.id}/likes/remove/'
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Post.objects.count(), 1)
+        self.assertEqual(PostLike.objects.count(), 0)

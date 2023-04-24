@@ -2,6 +2,8 @@ from pathlib import Path
 
 from rest_framework.generics import get_object_or_404
 
+from django.db.models import Count, QuerySet
+from django.db.models.functions import TruncDate
 from django.conf import settings
 
 from .models import Post, PostLike
@@ -41,3 +43,18 @@ def get_post_like_with_id_or_404(**kwargs) -> PostLike:
 
 def get_or_create_post_like(data: dict) -> tuple[PostLike, bool]:
     return PostLike.objects.get_or_create(**data)
+
+
+def get_user_likes_by_day(
+    user_id: int, date_from: str, date_to: str
+) -> QuerySet[PostLike]:
+    """
+    Return how many likes was made by user aggregated by day.
+    """
+    likes = PostLike.objects.filter(author_id=user_id)
+    if date_from is not None:
+        likes = likes.filter(date_created__gte=date_from)
+    if date_to is not None:
+        likes = likes.filter(date_created__lte=date_to)
+    likes = likes.annotate(day=TruncDate('date_created')).values('day')
+    return likes.annotate(total_likes=Count('day'))

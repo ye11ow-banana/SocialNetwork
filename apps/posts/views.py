@@ -1,12 +1,13 @@
 from rest_framework import generics, status
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from django.http import Http404
 
 from . import services
-from .models import PostLike
 from .permissions import IsPostAuthor
 from .serializers import PostSerializer, MediaSerializer, PostLikeSerializer
 
@@ -55,7 +56,28 @@ class PostLikeDestroyView(generics.DestroyAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class LikeAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        date_from = request.query_params.get('date_from', None)
+        date_to = request.query_params.get('date_to', None)
+
+        likes_by_day = services.get_user_likes_by_day(
+            request.user.id, date_from, date_to)
+        return self.get_paginated_response(likes_by_day)
+
+    def get_paginated_response(self, queryset):
+        paginator = LimitOffsetPagination()
+        paginator.get_count = lambda x: len(x)
+        page = paginator.paginate_queryset(queryset, self.request)
+        if page is not None:
+            return paginator.get_paginated_response(page)
+        return Response(queryset)
+
+
 post_creation = PostCreationView.as_view()
 media_creation = MediaCreationView.as_view()
 post_like_creation = PostLikeCreationView.as_view()
 post_like_destroy = PostLikeDestroyView.as_view()
+like_analytics = LikeAnalyticsView.as_view()

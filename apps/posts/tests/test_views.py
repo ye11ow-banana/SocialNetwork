@@ -221,3 +221,63 @@ class PostLikeDestroyViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Post.objects.count(), 1)
         self.assertEqual(PostLike.objects.count(), 0)
+
+
+class LikeAnalyticsViewTest(APITestCase):
+
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(
+            username='test_user', password='test_pass')
+        self.user2 = User.objects.create_user(
+            username='test_user2', password='test_pass2')
+        self.token = AccessToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer  {self.token}')
+        self.url = 'http://127.0.0.1:8000/api/posts/likes/analytics/'
+        self.post = Post.objects.create(author=self.user)
+        self.post2 = Post.objects.create(author=self.user2)
+        self.post3 = Post.objects.create(author=self.user)
+        self.post_like1 = PostLike.objects.create(
+            author=self.user, post=self.post, date_created='2023-10-10')
+        self.post_like2 = PostLike.objects.create(
+            author=self.user2, post=self.post, date_created='2023-10-10')
+        self.post_like3 = PostLike.objects.create(
+            author=self.user, post=self.post2, date_created='2023-05-10')
+        self.post_like4 = PostLike.objects.create(
+            author=self.user, post=self.post3, date_created='2023-10-10')
+
+    def test_authentication_required(self) -> None:
+        self.client.credentials()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_empty_query_params(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Post.objects.count(), 3)
+        self.assertEqual(PostLike.objects.count(), 4)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['day'], '2023-05-10')
+        self.assertEqual(response.data[0]['total_likes'], 1)
+        self.assertEqual(response.data[1]['day'], '2023-10-10')
+        self.assertEqual(response.data[1]['total_likes'], 2)
+
+    def test_data_range_query_params(self) -> None:
+        url = f'{self.url}?date_from=2023-05-10&date_to=2023-10-09'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Post.objects.count(), 3)
+        self.assertEqual(PostLike.objects.count(), 4)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['day'], '2023-05-10')
+        self.assertEqual(response.data[0]['total_likes'], 1)
+
+    def test_pagination(self) -> None:
+        url = f'{self.url}?limit=1&offset=1'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Post.objects.count(), 3)
+        self.assertEqual(PostLike.objects.count(), 4)
+        data = response.data['results']
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['day'], '2023-10-10')
+        self.assertEqual(data[0]['total_likes'], 2)

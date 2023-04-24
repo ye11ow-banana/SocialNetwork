@@ -1,10 +1,13 @@
 import json
 import shutil
+from datetime import datetime
 
+import pytz
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -141,7 +144,8 @@ class PostLikeCreationViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_new_post_like_created(self) -> None:
-        response = self.client.post(self.url, data={})
+        response = self.client.post(
+            self.url, data=dict(date_created='2023-04-23'))
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Post.objects.count(), 1)
         self.assertEqual(PostLike.objects.count(), 1)
@@ -151,14 +155,17 @@ class PostLikeCreationViewTest(APITestCase):
 
     def test_non_existent_post(self) -> None:
         url = f'http://127.0.0.1:8000/api/posts/{self.post.id+1}/likes/add/'
-        response = self.client.post(url, data={})
+        response = self.client.post(url, data=dict(date_created='2023-04-23'))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(Post.objects.count(), 1)
         self.assertEqual(PostLike.objects.count(), 0)
 
     def test_second_like_rejected(self) -> None:
-        PostLike.objects.create(author=self.user, post=self.post)
-        response = self.client.post(self.url, data={})
+        date = datetime(2023, 4, 23, 0, 0, 0, 0, tzinfo=pytz.UTC)
+        PostLike.objects.create(
+            author=self.user, post=self.post, date_created=date)
+        response = self.client.post(
+            self.url, data=dict(date_created='2023-04-23'))
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Post.objects.count(), 1)
         self.assertEqual(PostLike.objects.count(), 1)
@@ -176,7 +183,7 @@ class PostLikeDestroyViewTest(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer  {self.token}')
         self.post = Post.objects.create(author=self.user)
         self.post_like = PostLike.objects.create(
-            author=self.user, post=self.post
+            author=self.user, post=self.post, date_created=timezone.now()
         )
         self.url = f'http://127.0.0.1:8000/api/posts/' \
                    f'{self.post.id}/likes/remove/'
@@ -236,14 +243,16 @@ class LikeAnalyticsViewTest(APITestCase):
         self.post = Post.objects.create(author=self.user)
         self.post2 = Post.objects.create(author=self.user2)
         self.post3 = Post.objects.create(author=self.user)
+        date1 = datetime(2023, 10, 10, 0, 0, 0, 0, tzinfo=pytz.UTC)
+        date2 = datetime(2023, 5, 10, 0, 0, 0, 0, tzinfo=pytz.UTC)
         self.post_like1 = PostLike.objects.create(
-            author=self.user, post=self.post, date_created='2023-10-10')
+            author=self.user, post=self.post, date_created=date1)
         self.post_like2 = PostLike.objects.create(
-            author=self.user2, post=self.post, date_created='2023-10-10')
+            author=self.user2, post=self.post, date_created=date1)
         self.post_like3 = PostLike.objects.create(
-            author=self.user, post=self.post2, date_created='2023-05-10')
+            author=self.user, post=self.post2, date_created=date2)
         self.post_like4 = PostLike.objects.create(
-            author=self.user, post=self.post3, date_created='2023-10-10')
+            author=self.user, post=self.post3, date_created=date1)
 
     def test_authentication_required(self) -> None:
         self.client.credentials()

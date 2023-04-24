@@ -11,9 +11,6 @@ class UpdateLastActivityMiddleware:
 
     def __call__(self, request):
         response = self._get_response(request)
-        return response
-
-    def process_view(self, request, *args, **kwargs):
         try:
             user = request.user
         except AttributeError:
@@ -23,3 +20,4 @@ class UpdateLastActivityMiddleware:
             )
         if user.is_authenticated:
             update_user_last_activity(user.id)
+        return response

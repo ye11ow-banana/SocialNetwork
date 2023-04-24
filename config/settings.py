@@ -116,6 +116,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'UPDATE_LAST_LOGIN': True,
 }
 
 IMAGE_FORMATS = ('jpg', 'pdf', 'png', 'webp', 'jpeg')

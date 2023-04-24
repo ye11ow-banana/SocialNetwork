@@ -24,7 +24,7 @@ class MediaAdmin(admin.ModelAdmin):
 
 @admin.register(PostLike)
 class PostLikeAdmin(admin.ModelAdmin):
-    list_display = ('post', 'author')
+    list_display = ('id', 'post', 'author', 'date_created')
     search_fields = ('post__id', 'author__username')
     list_filter = ('post', 'author')
     save_on_top = True

@@ -69,8 +69,9 @@ class PostLike(models.Model):
         related_name='likes',
         verbose_name='Like owner',
     )
-    date_created = models.DateTimeField(
-        'Post like creation date', auto_now_add=True)
+    # There is no `auto_now_add` for testing the functionality
+    # of the bot according to the specification
+    date_created = models.DateTimeField('Post like creation date')
 
     class Meta:
         db_table = 'like'

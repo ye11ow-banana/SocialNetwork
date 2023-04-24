@@ -74,5 +74,5 @@ class PostLike(models.Model):
     date_created = models.DateTimeField('Post like creation date')
 
     class Meta:
-        db_table = 'like'
+        db_table = 'post_like'
         unique_together = ('post', 'author')

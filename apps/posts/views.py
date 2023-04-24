@@ -3,13 +3,15 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from django.http import Http404
 
 from . import services
 from .permissions import IsPostAuthor
-from .serializers import PostSerializer, MediaSerializer, PostLikeSerializer
+from .serializers import (
+    PostSerializer, MediaSerializer, PostLikeSerializer,
+    PostLikeAnalyticsSerializer
+)
 
 
 class PostCreationView(generics.CreateAPIView):
@@ -56,24 +58,22 @@ class PostLikeDestroyView(generics.DestroyAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class LikeAnalyticsView(APIView):
+class LikeAnalyticsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = PostLikeAnalyticsSerializer
+    pagination_class = LimitOffsetPagination
 
-    def get(self, request):
-        date_from = request.query_params.get('date_from', None)
-        date_to = request.query_params.get('date_to', None)
+    def get_queryset(self):
+        date_from = self.request.query_params.get('date_from', None)
+        date_to = self.request.query_params.get('date_to', None)
+        return services.get_user_likes_by_day(
+            self.request.user.id, date_from, date_to)
 
-        likes_by_day = services.get_user_likes_by_day(
-            request.user.id, date_from, date_to)
-        return self.get_paginated_response(likes_by_day)
-
-    def get_paginated_response(self, queryset):
-        paginator = LimitOffsetPagination()
+    @property
+    def paginator(self):
+        paginator = super().paginator
         paginator.get_count = lambda x: len(x)
-        page = paginator.paginate_queryset(queryset, self.request)
-        if page is not None:
-            return paginator.get_paginated_response(page)
-        return Response(queryset)
+        return paginator
 
 
 post_creation = PostCreationView.as_view()

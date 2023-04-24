@@ -33,3 +33,8 @@ class PostLikeSerializer(serializers.ModelSerializer):
     def create(self, validated_data: dict) -> PostLike:
         post_like, _ = services.get_or_create_post_like(validated_data)
         return post_like
+
+
+class PostLikeAnalyticsSerializer(serializers.Serializer):
+    day = serializers.DateField()
+    total_likes = serializers.IntegerField(min_value=1)

@@ -1,7 +1,9 @@
+from datetime import datetime
 from pathlib import Path
 
 from rest_framework.generics import get_object_or_404
 
+from django.utils import timezone
 from django.db.models import Count, QuerySet
 from django.db.models.functions import TruncDate
 from django.conf import settings
@@ -45,6 +47,11 @@ def get_or_create_post_like(data: dict) -> tuple[PostLike, bool]:
     return PostLike.objects.get_or_create(**data)
 
 
+def set_date_with_timezone(date: str) -> datetime:
+    date = datetime.strptime(date, '%Y-%m-%d')
+    return timezone.make_aware(date, timezone.get_default_timezone())
+
+
 def get_user_likes_by_day(
     user_id: int, date_from: str, date_to: str
 ) -> QuerySet[PostLike]:
@@ -53,8 +60,10 @@ def get_user_likes_by_day(
     """
     likes = PostLike.objects.filter(author_id=user_id)
     if date_from is not None:
+        date_from = set_date_with_timezone(date_from)
         likes = likes.filter(date_created__gte=date_from)
     if date_to is not None:
+        date_to = set_date_with_timezone(date_to)
         likes = likes.filter(date_created__lte=date_to)
     likes = likes.annotate(day=TruncDate('date_created')).values('day')
     return likes.annotate(total_likes=Count('day'))

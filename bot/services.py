@@ -1,7 +1,6 @@
 import json
 from datetime import date, timedelta
 from random import randint
-from typing import BinaryIO
 
 import requests
 
@@ -29,7 +28,7 @@ def login(username: str, password: str) -> dict[str, str]:
     return json.loads(response.text)
 
 
-def create_post_text_part(text: str, access_token: str) -> dict:
+def create_post(text: str, access_token: str) -> dict:
     url = 'http://127.0.0.1:8000/api/posts/create/'
     headers = dict(Authorization=f'Bearer {access_token}')
     response = requests.post(url, data=dict(text=text), headers=headers)
@@ -39,35 +38,6 @@ def create_post_text_part(text: str, access_token: str) -> dict:
             f'Status code: {response.status_code}'
         )
     return json.loads(response.text)
-
-
-def create_post_media_part(
-    post_id: int, file: BinaryIO, access_token: str
-) -> None:
-    url = f'http://127.0.0.1:8000/api/posts/{post_id}/media/add/'
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Disposition': f'attachment; filename={file.name}'
-    }
-    files = dict(file=file)
-    response = requests.post(url, files=files, headers=headers)
-    if response.status_code != 201:
-        raise ValueError(
-            'Error has occurred during creating media part of a post '
-            f'Status code: {response.status_code}'
-        )
-
-
-def create_post(
-    text: str, file_path: str, access_token: str
-) -> dict:
-    post = create_post_text_part(text, access_token)
-    post_id = post.get('id')
-    if post_id is None:
-        raise ValueError('Post id was not returned during post creation')
-    with open(file_path, 'rb') as file:
-        create_post_media_part(post_id, file, access_token)
-    return post
 
 
 def create_like(post_id: int, date_created: str, access_token: str) -> None:
@@ -97,11 +67,7 @@ def signup_users_and_create_posts(
             raise ValueError('Access token was not returned during login')
         access_tokens.append(access_token)
         for __ in range(randint(1, max_posts_per_user)):
-            post = create_post(
-                f'Some post text {__ + 1}',
-                'src/media/lizard.jpg',
-                access_token,
-            )
+            post = create_post(f'Some post text {__ + 1}', access_token)
             posts.append(post)
     return access_tokens, posts
 

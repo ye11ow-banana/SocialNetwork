@@ -30,12 +30,16 @@ python3 manage.py runserver
 ---
 
 ### Run automated bot
+```sh
+cd bot
+```
 Set config file
 ```sh
 config.yaml
 ```
+Run bot
 ```sh
-python3 bot/main.py
+python3 main.py
 ```
 
 ---
@@ -52,8 +56,7 @@ POST http://127.0.0.1:8000/api/accounts/auth/users/
 
 user login
 ```sh
-HEADERS
-Authorization: Bearer <ACCESS_TOKEN>
+data: {"username": "username", "password": "!@#QWE!@#QWE"}
 ```
 ```sh
 POST http://127.0.0.1:8000/api/accounts/auth/jwt/create/
@@ -102,7 +105,7 @@ HEADERS
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 ```sh
-POST http://127.0.0.1:8000/api/posts/<post_id>/likes/remove/
+DELETE http://127.0.0.1:8000/api/posts/<post_id>/likes/remove/
 ```
 
 analytics about how many likes was made
